@@ -1,10 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LogGroupRetentionStack } from './features/log-group-retention';
-import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, CLOUDWATCH_ERRORS_FEATURE_STACK, DEFAULT_RETENTION_FEATURE_STACK } from './constants';
+import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, CLOUDWATCH_ERRORS_FEATURE_STACK, DEFAULT_RETENTION_FEATURE_STACK, GLUE_JOB_FAILURE_FEATURE_STACK } from './constants';
 import { LogGroupErrorAlertsStack } from './features/log-group-error-alerts';
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { customFilters } from './input/custom-log-filters';
+import { GlueJobFailuresStack } from './features/glue-etl-failures';
 
 export interface AwsCdkEarlyWarningSystemStackProps extends cdk.StackProps {
   environmentName: string, 
@@ -28,5 +29,7 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
       accountEnvironment,
       customLogFilterPatternsPerLogGroup: customFilters,
     });
+
+    new GlueJobFailuresStack(this, GLUE_JOB_FAILURE_FEATURE_STACK, props);
   }
 }
