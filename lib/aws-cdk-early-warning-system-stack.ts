@@ -30,6 +30,10 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
       customLogFilterPatternsPerLogGroup: customFilters,
     });
 
-    new GlueJobFailuresStack(this, GLUE_JOB_FAILURE_FEATURE_STACK, props);
+    new GlueJobFailuresStack(this, GLUE_JOB_FAILURE_FEATURE_STACK, {
+      ...props,
+      destinationTopic: topic,
+      accountEnvironment,
+    });
   }
 }
