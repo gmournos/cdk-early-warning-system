@@ -1,4 +1,6 @@
 export const LIBRARY_NAMESPACE = 'ews';
+export const ALERTS_TOPIC_ID = `${LIBRARY_NAMESPACE}-alerts-topic`;
+export const ALERTS_TOPIC_NAME = `EarlyWarningSystemAlerts`;
 
 export const DEFAULT_RETENTION_FEATURE = `${LIBRARY_NAMESPACE}-cloudwatch-default-retention`;
 export const DEFAULT_RETENTION_FEATURE_STACK = `${DEFAULT_RETENTION_FEATURE}-stack`;
