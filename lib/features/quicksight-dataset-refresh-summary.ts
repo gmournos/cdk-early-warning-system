@@ -7,7 +7,9 @@ import { buildLogGroupForLambda } from '../utils/cloudwatch';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
-import { QS_FAILURE_SUMMARY_FEATURE_FUNCTION } from '../constants';
+import { QS_FAILURE_SUMMARY_FEATURE_FUNCTION, QS_FAILURE_SUMMARY_FEATURE_RULE } from '../constants';
+import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
+import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 
 export interface QsDatasetRefreshSummaryStackProps extends NestedStackProps {
     destinationTopic: ITopic;
@@ -24,6 +26,7 @@ export class QsDatasetRefreshSummaryStack extends NestedStack {
         super(scope, id, props);
         this.logGroup = buildLogGroupForLambda(this, FUNCTION_NAME);
         this.summaryQsRefreshFunction = this.createSummaryQsDatasetLambdaFunction(props.accountEnvironment, props.destinationTopic);
+        this.createErrorAlarmForQsDatasetRefresh();
     }
 
     createSummaryQsDatasetLambdaFunction(accountEnvironment: string, destinationTopic: ITopic) {
@@ -68,4 +71,12 @@ export class QsDatasetRefreshSummaryStack extends NestedStack {
         return sendCustomizedAlertForQsRefreshSummary;
     }
 
+    createErrorAlarmForQsDatasetRefresh() {
+        // Define the EventBridge rule
+        const rule = new Rule(this, QS_FAILURE_SUMMARY_FEATURE_RULE, {
+            ruleName: QS_FAILURE_SUMMARY_FEATURE_RULE,
+            schedule: Schedule.cron({ minute: '0', hour: '7', day: '*' }), 
+        });
+        rule.addTarget(new LambdaFunction(this.summaryQsRefreshFunction));
+    }
 }
