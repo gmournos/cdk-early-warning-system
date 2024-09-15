@@ -3,8 +3,8 @@ import { Construct } from 'constructs';
 import { ITopic } from 'aws-cdk-lib/aws-sns';
 import { ILogGroup } from 'aws-cdk-lib/aws-logs';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
-import { buildLogGroupForLambda } from '../utils/cloudwatch';
 import { APIGW_ERRORS_FEATURE_FUNCTION } from '../constants';
+import { buildLogGroupForLambda, createLogSubscriptionAlertFunction } from '../utils/cloudwatch';
 
 const FUNCTION_NAME = APIGW_ERRORS_FEATURE_FUNCTION;
 
@@ -21,5 +21,18 @@ export class ApiGatewayNotificationsStack extends NestedStack {
     constructor(scope: Construct, id: string, props: ApiGatewayNotificationsStackProps) {
         super(scope, id, props);
         this.logGroup = buildLogGroupForLambda(this, FUNCTION_NAME);
+        this.sendCustomizedNotificationFunction = this.createApiGatewayFailLambdaFunction(props.accountEnvironment, props.destinationTopic);
+    }
+
+    createApiGatewayFailLambdaFunction(accountEnvironment: string, destinationTopic: ITopic) {
+        return createLogSubscriptionAlertFunction({
+            scope: this,
+            functionName: FUNCTION_NAME,
+            logGroup: this.logGroup,
+            accountEnvironment,
+            handler: 'sendCustomizedNotificationFromApiGatewaySubscription',
+            sourceFilePath: ['apigw', 'handlers.ts'],
+            destinationTopic,
+        });
     }
 }
