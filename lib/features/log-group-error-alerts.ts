@@ -1,9 +1,9 @@
 import { NestedStack, NestedStackProps, RemovalPolicy } from 'aws-cdk-lib';
 import { ITopic } from 'aws-cdk-lib/aws-sns';
 import { Construct } from 'constructs';
-import { createLogSubscriptionAlertFunction } from '../utils/cloudwatch';
+import { buildLogGroupForLambda, createLogSubscriptionAlertFunction } from '../utils/cloudwatch';
 import { CLOUDWATCH_ERRORS_FEATURE_FUNCTION, CLOUDWATCH_ERRORS_FEATURE_POLICY } from '../constants';
-import { CfnAccountPolicy } from 'aws-cdk-lib/aws-logs';
+import { CfnAccountPolicy, ILogGroup } from 'aws-cdk-lib/aws-logs';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 
 export interface LogGroupErrorAlertsStackProps extends NestedStackProps {
@@ -15,16 +15,20 @@ const FUNCTION_NAME = CLOUDWATCH_ERRORS_FEATURE_FUNCTION;
 
 export class LogGroupErrorAlertsStack extends NestedStack {
     logErrorSubcriptionFunction: IFunction;
+    logGroup: ILogGroup;
 
     constructor(scope: Construct, private id: string, props: LogGroupErrorAlertsStackProps) {
         super(scope, id, props);
+        this.logGroup = buildLogGroupForLambda(this, FUNCTION_NAME);
 
         this.logErrorSubcriptionFunction = this.createLogErrorSubcriptionFunction(props.accountEnvironment, props.destinationTopic);
         this.createGeneralSubscriptionFilter();
     }
 
     createGeneralSubscriptionFilter() {
-        const exceptionalLogGroups = [`/aws/lambda/${FUNCTION_NAME}`];
+        const exceptionalLogGroups = [`/aws/lambda/${FUNCTION_NAME}`]; 
+        // cannot use this.logGroup.logGroupName here. The name is a Token and we cannot apply JSON.stringify to it
+
         const logsPolicy = new CfnAccountPolicy(this, CLOUDWATCH_ERRORS_FEATURE_POLICY, {
             policyDocument: JSON.stringify({
                 DestinationArn: this.logErrorSubcriptionFunction.functionArn,
@@ -37,6 +41,7 @@ export class LogGroupErrorAlertsStack extends NestedStack {
             scope: 'ALL',
         });
         logsPolicy.applyRemovalPolicy(RemovalPolicy.DESTROY);
+        logsPolicy.node.addDependency(this.logGroup);
     }
 
     createLogErrorSubcriptionFunction(accountEnvironment: string, destinationTopic: ITopic) {
@@ -47,6 +52,7 @@ export class LogGroupErrorAlertsStack extends NestedStack {
             handler: 'sendCustomizedNotificationFromErrorLogSubscription',
             sourceFilePath: ['subscription-filters', 'handlers.ts'],
             destinationTopic,
+            logGroup: this.logGroup,
         });
     }
 }
