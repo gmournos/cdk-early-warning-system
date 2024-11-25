@@ -24,12 +24,14 @@ export class LogGroupErrorAlertsStack extends NestedStack {
     }
 
     createGeneralSubscriptionFilter() {
+        const exceptionalLogGroups = [`/aws/lambda/${FUNCTION_NAME}`];
         const logsPolicy = new CfnAccountPolicy(this, CLOUDWATCH_ERRORS_FEATURE_POLICY, {
             policyDocument: JSON.stringify({
                 DestinationArn: this.logErrorSubcriptionFunction.functionArn,
                 FilterPattern: '?Runtime.ExitError ?"Task timed out after" ?"ERROR" ?Exception', // system error, e.g. out of memory error, lambda timeout, or just error,
                 Distribution: 'Random',
             }),
+            selectionCriteria: `LogGroupName NOT IN ${JSON.stringify(exceptionalLogGroups)}`,
             policyName: CLOUDWATCH_ERRORS_FEATURE_POLICY,
             policyType: 'SUBSCRIPTION_FILTER_POLICY',
             scope: 'ALL',
