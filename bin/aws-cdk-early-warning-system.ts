@@ -4,4 +4,6 @@ import * as cdk from 'aws-cdk-lib';
 import { AwsCdkEarlyWarningSystemStack } from '../lib/aws-cdk-early-warning-system-stack';
 
 const app = new cdk.App();
-new AwsCdkEarlyWarningSystemStack(app, 'AwsCdkEarlyWarningSystemStack', {});
+new AwsCdkEarlyWarningSystemStack(app, 'AwsCdkEarlyWarningSystemStack', {
+    environmentName: 'test', // e.g. 'test', 'development', 'staging', 'production' etc
+});
