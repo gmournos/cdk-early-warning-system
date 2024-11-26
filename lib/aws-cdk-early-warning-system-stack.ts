@@ -4,6 +4,7 @@ import { LogGroupRetentionStack } from './features/log-group-retention';
 import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, CLOUDWATCH_ERRORS_FEATURE_STACK, DEFAULT_RETENTION_FEATURE_STACK } from './constants';
 import { LogGroupErrorAlertsStack } from './features/log-group-error-alerts';
 import { Topic } from 'aws-cdk-lib/aws-sns';
+import { customFilters } from './input/custom-log-filters';
 
 export interface AwsCdkEarlyWarningSystemStackProps extends cdk.StackProps {
   environmentName: string, 
@@ -25,10 +26,7 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
       ...props,
       destinationTopic: topic,
       accountEnvironment,
-      customLogFilterPatternsPerLogGroup: {
-        '/aws/cloudtrail': [],
-      },
+      customLogFilterPatternsPerLogGroup: customFilters,
     });
-
   }
 }
