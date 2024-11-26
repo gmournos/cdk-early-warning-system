@@ -6,9 +6,18 @@ import { CLOUDWATCH_ERRORS_FEATURE_FUNCTION, CLOUDWATCH_ERRORS_FEATURE_POLICY } 
 import { CfnAccountPolicy, ILogGroup } from 'aws-cdk-lib/aws-logs';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 
+export type ErrorLogPattern = {
+    errorType: string,
+    logPatternString : string;
+};
+
+export type ErrorLogPatterns = [] | [ErrorLogPattern] | [ErrorLogPattern, ErrorLogPattern]; 
+// can be zero if we want no logging, is 2 at maximum, as Cloudwatch does not allow more than 2 subscription filters per log group
+
 export interface LogGroupErrorAlertsStackProps extends NestedStackProps {
     destinationTopic: ITopic;
     accountEnvironment: string;
+    customLogFilterPatternsPerLogGroup: Record<string, ErrorLogPatterns>; // keeps the correspondence of logGroupName to custom log patterns
 }
 
 const FUNCTION_NAME = CLOUDWATCH_ERRORS_FEATURE_FUNCTION;
@@ -22,11 +31,12 @@ export class LogGroupErrorAlertsStack extends NestedStack {
         this.logGroup = buildLogGroupWithAlertForLambda(this, FUNCTION_NAME, props.destinationTopic);
 
         this.logErrorSubcriptionFunction = this.createLogErrorSubcriptionFunction(props.accountEnvironment, props.destinationTopic);
-        this.createGeneralSubscriptionFilter();
+        this.createGeneralSubscriptionFilter(props.customLogFilterPatternsPerLogGroup);
     }
 
-    createGeneralSubscriptionFilter() {
-        const exceptionalLogGroups = [`/aws/lambda/${FUNCTION_NAME}`]; 
+    createGeneralSubscriptionFilter(customLogFilterPatternsPerLogGroup: Record<string, ErrorLogPatterns>) {
+        const allCustomFiltersLogGroups = Object.keys(customLogFilterPatternsPerLogGroup);
+        const exceptionalLogGroups = [...allCustomFiltersLogGroups, `/aws/lambda/${FUNCTION_NAME}`]; 
         // cannot use this.logGroup.logGroupName here. The name is a Token and we cannot apply JSON.stringify to it
 
         const logsPolicy = new CfnAccountPolicy(this, CLOUDWATCH_ERRORS_FEATURE_POLICY, {

@@ -24,7 +24,10 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
     new LogGroupErrorAlertsStack(this, CLOUDWATCH_ERRORS_FEATURE_STACK, {
       ...props,
       destinationTopic: topic,
-      accountEnvironment
+      accountEnvironment,
+      customLogFilterPatternsPerLogGroup: {
+        '/aws/cloudtrail': [],
+      },
     });
 
   }
