@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { LogGroupRetentionStack } from './features/log-group-retention';
 import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, CLOUDWATCH_ALARMS_FEATURE_STACK, 
   CLOUDWATCH_ERRORS_FEATURE_STACK, DEFAULT_RETENTION_FEATURE_STACK, GLUE_FAILURE_SUMMARY_FEATURE_STACK, 
-  GLUE_JOB_FAILURE_FEATURE_STACK, LONG_LATENCY_FEATURE_ALARM_PREFIX, LONG_LATENCY_FEATURE_STACK, QS_FAILURE_SUMMARY_FEATURE_STACK } from './constants';
+  GLUE_JOB_FAILURE_FEATURE_STACK, LONG_LATENCY_FEATURE_ALARM_PREFIX, LONG_LATENCY_FEATURE_STACK, QS_FAILURE_SUMMARY_FEATURE_FUNCTION, QS_FAILURE_SUMMARY_FEATURE_STACK } from './constants';
 import { LogGroupErrorAlertsStack } from './features/log-group-error-alerts';
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { customFilters } from './input/custom-log-filters';
@@ -64,7 +64,12 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
     new LambdaLongLatencyStack(this, LONG_LATENCY_FEATURE_STACK, {
       ...props,
       alarmPrefix: LONG_LATENCY_FEATURE_ALARM_PREFIX,
-      functionLatencies: [], // put here the functions that you want to monitor, and their max tolerable latency
+      functionLatencies: [
+        {
+          functionName: QS_FAILURE_SUMMARY_FEATURE_FUNCTION,
+          maxLatencyMs: 1000,
+        }
+      ]
     });
 
     
