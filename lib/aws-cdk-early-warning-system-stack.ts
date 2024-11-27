@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { LogGroupRetentionStack } from './features/log-group-retention';
-import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, CLOUDFRONT_ERRORS_FEATURE_STACK, CLOUDWATCH_ALARMS_FEATURE_STACK, 
+import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, APIGW_ERRORS_FEATURE_STACK, CLOUDFRONT_ERRORS_FEATURE_STACK, CLOUDWATCH_ALARMS_FEATURE_STACK, 
   CLOUDWATCH_ERRORS_FEATURE_STACK, DEFAULT_RETENTION_FEATURE_STACK, GLUE_FAILURE_SUMMARY_FEATURE_STACK, 
   GLUE_JOB_FAILURE_FEATURE_STACK, LONG_LATENCY_FEATURE_ALARM_PREFIX, LONG_LATENCY_FEATURE_STACK, QS_FAILURE_SUMMARY_FEATURE_FUNCTION, QS_FAILURE_SUMMARY_FEATURE_STACK } from './constants';
 import { LogGroupErrorAlertsStack } from './features/log-group-error-alerts';
@@ -13,6 +13,7 @@ import { QsDatasetRefreshSummaryStack } from './features/quicksight-dataset-refr
 import { NotificationsOnAlarmsStack } from './features/cloudwatch-alarms';
 import { LambdaLongLatencyStack } from './features/lambda-long-latency';
 import { CloudfrontErrorsStack } from './features/cloudfront-errors';
+import { ApiGatewayNotificationsStack } from './features/api-gw-errors';
 
 export interface AwsCdkEarlyWarningSystemStackProps extends cdk.StackProps {
   environmentName: string, 
@@ -80,6 +81,13 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
       destinationTopic: topic,
       accountEnvironment,
       logCloudFrontBucketArn, 
+    });
+
+    new ApiGatewayNotificationsStack(this, APIGW_ERRORS_FEATURE_STACK, {
+      ...props,
+      destinationTopic: topic,
+      accountEnvironment,
+      accessLogsArnRefs: [], // add here the references to the access logs log groups, exported from the stacks that deploy your APIs
     });
     
   }
