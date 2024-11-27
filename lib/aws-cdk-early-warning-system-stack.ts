@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { LogGroupRetentionStack } from './features/log-group-retention';
 import { ALERTS_TOPIC_ID, ALERTS_TOPIC_NAME, CLOUDWATCH_ALARMS_FEATURE_STACK, 
   CLOUDWATCH_ERRORS_FEATURE_STACK, DEFAULT_RETENTION_FEATURE_STACK, GLUE_FAILURE_SUMMARY_FEATURE_STACK, 
-  GLUE_JOB_FAILURE_FEATURE_STACK, QS_FAILURE_SUMMARY_FEATURE_STACK } from './constants';
+  GLUE_JOB_FAILURE_FEATURE_STACK, LONG_LATENCY_FEATURE_ALARM_PREFIX, LONG_LATENCY_FEATURE_STACK, QS_FAILURE_SUMMARY_FEATURE_STACK } from './constants';
 import { LogGroupErrorAlertsStack } from './features/log-group-error-alerts';
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { customFilters } from './input/custom-log-filters';
@@ -11,6 +11,7 @@ import { GlueJobFailuresStack } from './features/glue-etl-failures';
 import { GlueSummaryStack } from './features/glue-etl-summary';
 import { QsDatasetRefreshSummaryStack } from './features/quicksight-dataset-refresh-summary';
 import { NotificationsOnAlarmsStack } from './features/cloudwatch-alarms';
+import { LambdaLongLatencyStack } from './features/lambda-long-latency';
 
 export interface AwsCdkEarlyWarningSystemStackProps extends cdk.StackProps {
   environmentName: string, 
@@ -52,13 +53,20 @@ export class AwsCdkEarlyWarningSystemStack extends cdk.Stack {
       destinationTopic: topic,
       accountEnvironment,
     });
-
+    
     new NotificationsOnAlarmsStack(this, CLOUDWATCH_ALARMS_FEATURE_STACK, {
       ...props,
       destinationTopic: topic,
       accountEnvironment,
-      alarmPrefixes: [],
+      alarmPrefixes: [ LONG_LATENCY_FEATURE_ALARM_PREFIX ],
     });
+
+    new LambdaLongLatencyStack(this, LONG_LATENCY_FEATURE_STACK, {
+      ...props,
+      alarmPrefix: LONG_LATENCY_FEATURE_ALARM_PREFIX,
+      functionLatencies: [], // put here the functions that you want to monitor, and their max tolerable latency
+    });
+
     
   }
 }
